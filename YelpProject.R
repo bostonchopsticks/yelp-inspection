@@ -1,4 +1,6 @@
-# Set up R
+# ===========================
+# SET UP R
+# ===========================
 Rpt <- "/Users/namsan/Desktop/Spring\ 2018/Projects/Rpt"
 
 # Shortcuts to folders of interest
@@ -9,7 +11,10 @@ RCode <- paste0(Rpt,"/RCode")
 RData <- paste0(Rpt,"/RData")
 Output <- paste0(Rpt,"/Output")
 
-# =============================================================================
+# ===========================
+# INSTALL PACKAGES 
+# AND CREATE A THEME FOR GGPLOT
+# ===========================
 library(stringr)
 library(ggplot2)
 #installed.packages("ggcorrplot")
@@ -69,6 +74,11 @@ fte_theme <- function() {
 install.packages("jsonlite")
 library(jsonlite)
 
+
+# ===========================
+# IMPORT DATA 
+# ===========================
+
 # import yelp data 
 YelpBusiness <- stream_in(file(paste0(RawData,"/business.json")))
 head(YelpBusiness)
@@ -87,7 +97,9 @@ goodIns <- rawIns[, Restaurant.Name := as.character(Restaurant.Name)]
 goodIns <- rawIns[, Address := as.character(Address)]
 str(goodIns)
 
-# =============================================================================
+# ===========================
+# PREPARE DATA TO MERGE
+# ===========================
 
 # use data.table install.packages("data.table")
 library(data.table)
@@ -103,12 +115,6 @@ raw.Data1 <- raw.Data1[, -grep("^attributes",names(raw.Data))]
 
 # convert data frame to data table and examine the variables 
 raw.Data1 <- as.data.table(raw.Data1)
-names(raw.Data1)
-class(raw.Data1)
-str(raw.Data1)
-summary(raw.Data1)
-
-# =============================================================================
 
 # take all the businesses in Las Vegas 
 raw.Data2 <- raw.Data1[grep("Las Vegas", raw.Data1$city),]
@@ -122,7 +128,7 @@ raw.Data1[2,categories]
 table(raw.Data2[,categories])
 
 # =============================================================================
-MERGE
+# MERGE 2 DATA SETS
 # =============================================================================
 
 raw.Data2$name <- sapply(raw.Data2$name, str_to_title)
@@ -145,15 +151,10 @@ length(unique(Result1))
 summary(Result1)
 str(Result1)
 
-#write.csv(Result1, file = "restaurantproject.csv")
-
-# =============================================================================
-#CLEANING 
-# =============================================================================
+# =================
+# CLEANING 
+# =================
 names(Result1)
-
-#Result2 <- Result2[, -c("business_id", "city", "state", "is_open", "postal_code", "Serial.Number", "Permit.Number", "Employee.ID","Date.Current","Inspection.Date","Inspection.Time", "Inspection.Type" , "Violations",)]
-
 
 goodData <- Result1[, c("Restaurant.Name", "neighborhood", "stars", "review_count", "Category.Name", "Current.Demerits","Current.Grade","Inspection.Demerits", "Inspection.Grade","Address","Zip", "longitude", "latitude","Location.1" )]
 
@@ -187,7 +188,6 @@ goodData$Current.Grade <- factor(goodData$Current.Grade, levels = c("a", "b", "c
 str(goodData)
 
 # fill blank space wth NA 
-#goodData1 <- as.data.table(apply(goodData, 2, function(x) gsub("^$|^ $", NA, x)))
 is.na(goodData) <- goodData==''
 setnames(goodData, c("Current.Demerits", "Inspection.Demerits"),c("Current.Violations", "Inspection.Violations"))
 
@@ -198,55 +198,42 @@ goodData.reg <- copy(goodData)
 #==================
 # VISUALIZATION 
 #==================
-
 library(stargazer)
-#stargazer(goodData, type = "text", title="Descriptive statistics", digits=1, out="table1.txt")
 
-#tiff('Stars Distribution.tiff',units="in", width=6, height=4, res=300)
 qplot(data=goodData, stars) + theme_bw()
-#dev.off()
 
-#qplot(data=goodData, Category.Name)
-
-#tiff('Stars and review count.tiff',units="in", width=6, height=4, res=300)
 qplot(data=goodData, stars, review_count) + theme_bw()
-#dev.off()
+
 
 # Average Star Rating by Category
 stars.category <- aggregate(stars ~ Category.Name, goodData, mean)
 
-#tiff('Average Star Rating by Category.tiff',units="in", width=6, height=4, res=300)
 ggplot(data=stars.category, aes(reorder(Category.Name, stars), stars)) + geom_bar(stat="identity") + coord_flip() + geom_text(aes(label=round(stars, 2)), hjust=2, size=2, color="white") + fte_theme() + labs(y="Average Star Rating by Category", x="Category", title="Average Yelp Review Star Ratings by Category")
-#dev.off()
+
 
 # Average Star Rating by Neighborhood 
 stars.neighborhood <- aggregate(stars ~ neighborhood, goodData, mean)
 
-#tiff('Average Star Rating by Neighborhood .tiff',units="in", width=6, height=4, res=300)
 ggplot(data=stars.neighborhood, aes(reorder(neighborhood, stars), stars)) + geom_bar(stat="identity") + coord_flip() + geom_text(aes(label=round(stars, 2)), hjust=2, size=2, color="white") + fte_theme() + labs(y="Average Star Rating by Neighborhood ", x="Category", title="Average Yelp Review Star Ratings by Neighborhood") 
-#dev.off()
+
 
 #correlation plot
-#tiff('correlation.tiff', units="in", width=6, height=6, res=300)
 ggcorr(goodData[, 2:10], label = TRUE)
-#dev.off()
+
 
 # scatter plot stars and inspections demerits
-#tiff('CulmulativeDemerits and stars.tiff',units="in", width=7, height=5, res=300)
 ggplot(goodData, aes(x= stars, y=Current.Violations)) +
   geom_point(color = "darkred") +
   geom_smooth(method=lm) +
   scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
   labs(title = "Scatter plots cumulative violations and stars ") + fte_theme()
-#dev.off()
 
-#tiff('RecentDemerits and stars.tiff',units="in", width=7, height=5, res=300)
+
 ggplot(goodData, aes(x= stars, y=Inspection.Violations)) +
   geom_point(color = "red") +
   geom_smooth(method=lm) +
   scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
   labs(title = "Scatter plots most recent violations and stars")+ fte_theme()
-#dev.off()
 
 
 # multiple columns graph
@@ -257,13 +244,13 @@ dt1[, stars := as.factor(stars)]
 dt1[ , sumcount := sum(count), by = stars]
 dt1[, percentage := (count/sumcount)*100]
 
-#tiff('Percentage and Stars within Inspection Grade.tiff',units="in", width=7, height=5, res=300)
+
 ggplot(dt1,aes(x=stars,y=percentage,fill=factor(Inspection.Grade)))+
   geom_bar(stat="identity",position="dodge")+
   scale_fill_discrete(name="Inspection.Grade",
                       labels=c("a", "b", "c", "x")) +
   xlab("Stars")+ylab("Percentage") + theme_bw()
-#dev.off()
+
 
 dt2 <- setDT(data.frame(table(goodData$stars, goodData$Current.Grade)))
 
@@ -272,16 +259,14 @@ dt2[, stars := as.factor(stars)]
 dt2[ , sumcount := sum(count), by = stars]
 dt2[, percentage := (count/sumcount)*100]
 
-#tiff('Percentage and Stars within Cumulative Grade.tiff',units="in", width=7, height=5, res=300)
 ggplot(dt2,aes(x=stars,y=percentage,fill=Current.Grade))+
   geom_bar(stat="identity",position="dodge")+
   xlab("Stars")+ylab("Percentage") +
   scale_fill_brewer(palette="Dark2") + theme_bw()
-#dev.off()
 
 # see the different among a grade group and the rest 
 require("car")    
-goodData2 <- copy(goodData1)
+goodData2 <- copy(goodData)
 goodData2$Inspection.Grade <- recode(goodData2$Inspection.Grade, "c('c','x')='b'")
 goodData2$Current.Grade <- recode(goodData2$Current.Grade, "c('c','x')='b'")
 names(goodData2)
@@ -294,9 +279,8 @@ ggplot(goodData2, aes(x=stars, fill=Inspection.Grade)) +
   geom_histogram(binwidth=.5, position="dodge")
 
 # A basic box with the conditions colored
-#tiff('Box plots of Yelp ratings by Inspection groups.tiff',units="in", width=7, height=5, res=300)
 ggplot(goodData2, aes(x=Inspection.Grade, y = stars, fill=Inspection.Grade)) + geom_boxplot() + theme_bw()
-#dev.off()
+
 
 table(goodData2$Inspection.Grade)
 
@@ -313,11 +297,6 @@ goodData.reg$stars <- factor(goodData.reg$stars,
        levels = c("1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5"), #labels stars 
        ordered = TRUE)
 
-#goodData <- within(goodData, Inspection.Grade <- relevel(Inspection.Grade, ref = 4))
-#goodData <- within(goodData, Current.Grade <- relevel(Current.Grade, ref = 4))
-#goodData <- within(goodData,Category.Name <- relevel(Category.Name, ref = 6))
-#goodData <- within(goodData,neighborhood <- relevel(neighborhood, ref = 7))
-
 levels(goodData.reg$stars)
 class(goodData.reg$stars)
 levels(goodData.reg$Inspection.Grade)
@@ -325,12 +304,6 @@ levels(goodData.reg$Current.Grade)
 
 m1 <- polr(stars ~ . -Location.1-longitude-latitude-Zip-Address-Restaurant.Name, data=goodData.reg, Hess=TRUE)
 summary(m1)
-
-library(stargazer)
-#stargazer(m1, type="html",
- #         dep.var.labels= "stars"
-  #        , out="m1.html")
-
 
 m1.coef <- data.frame(coef(summary(m1)))
 m1.coef$pval = round((pnorm(abs(m1.coef$t.value), lower.tail = FALSE) * 2),2)
@@ -340,22 +313,8 @@ significant <- m1.coef[m1.coef$pval < 0.05,]
 
 m1.or=exp(coef(m1))
 m1.or
-library(stargazer)
-#stargazer(m1, type="html", coef=list(m1.or), p.auto=FALSE, out="m1or.htm")
 
 significant
 
 library(gridExtra)
-#pdf("significant.pdf", height=11, width=8.5)
 grid.table(significant)
-#ev.off()
-
-
-#stargazer(m1, type="html", out="m1.htm")
-#stargazer(m1, type="text", out="m1.txt")
-
-
-
-
-
-
