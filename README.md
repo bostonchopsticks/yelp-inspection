@@ -1,3 +1,3 @@
 # yelp-inspection
-Model Las Vegas Restaurant Yelp Ratings and Inspection Data in 2017
+Modeling Las Vegas Restaurant Yelp Ratings and Inspection Data in 2017
 In this project, I took data from Yelp Challenge Data set and South Nevada Health District Inpsection, merged them together to get the final data set. there is a reverse relationship among the number of Recent Demerits(violations) and Rating Stars, indicating partly of the consumers’reviews can be explained by food safety and cleanliness. However, the result driven from such a small sample size is not sufficient to say that whether Yelp reviews and stars are trustworthy or not. There are several things that the visualization process revealed such as the differences stars among categories and among neighborhoods.
